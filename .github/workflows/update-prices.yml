@@ -1,0 +1,31 @@
+name: 每日更新股期收盤價
+
+on:
+  schedule:
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch closing prices
+        run: python fetch_prices.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain prices.json)" ]; then
+            git add prices.json
+            git commit -m "auto update closing prices"
+            git push
+          else
+            echo "no change"
+          fi
