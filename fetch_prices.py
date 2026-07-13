@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-# 每日抓取股票期貨標的之收盤價（上市 TWSE + 上櫃 TPEx），輸出 prices.json
-# 由 GitHub Actions 於收盤後執行，網站讀取同源 prices.json（無 CORS 問題）
+# 每日抓取股票期貨標的收盤價（上市 TWSE + 上櫃 TPEx），輸出 prices.json
+# 由 GitHub Actions 於收盤後執行；網站讀取同源 prices.json（無 CORS 問題）
 import json, urllib.request, datetime, sys
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; sf-price-bot/1.0)"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8",
+    "Referer": "https://www.tpex.org.tw/",
+}
 
 def get_json(url):
-    req = urllib.request.Request(url, headers=UA)
+    req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read().decode("utf-8"))
+        raw = r.read().decode("utf-8", "replace")
+    return json.loads(raw)
 
 def clean_price(v):
     if v is None: return None
     s = str(v).replace(",", "").strip()
-    if s in ("", "--", "---", "N/A", "0", "0.00"): 
-        try:
-            f=float(s); 
-            return f if f>0 else None
-        except: return None
     try:
         f = float(s); return f if f > 0 else None
     except: return None
@@ -28,18 +30,15 @@ def pick(d, keys):
     return None
 
 def roc_to_ad(s):
-    # '1150709' -> '2026-07-09'
     s = str(s).strip()
-    if len(s) == 7:
+    if len(s) == 7 and s.isdigit():
         return f"{int(s[:3])+1911}-{s[3:5]}-{s[5:7]}"
+    if len(s) == 8 and s.isdigit():   # 西元 yyyymmdd
+        return f"{s[:4]}-{s[4:6]}-{s[6:8]}"
     return s
 
-# 需要報價的證券代號
-secids = set()
-for it in json.load(open("stock_futures.json", encoding="utf-8")):
-    secids.add(str(it["underlyingId"]))
-
-prices, dates = {}, {}
+secids = set(str(it["underlyingId"]) for it in json.load(open("stock_futures.json", encoding="utf-8")))
+prices, dates, debug = {}, {}, {}
 
 # 1) 上市 TWSE
 try:
@@ -51,21 +50,27 @@ try:
             if p is not None:
                 prices[code] = p
                 dates[code] = roc_to_ad(pick(row, ["Date"]))
-    print("TWSE matched:", sum(1 for c in secids if c in prices))
+    debug["twse"] = {"records": len(tw), "matched": sum(1 for c in secids if c in prices)}
 except Exception as e:
-    print("TWSE error:", e, file=sys.stderr)
+    debug["twse"] = {"error": repr(e)}
 
-# 2) 上櫃 TPEx（欄位名稱防禦式偵測）
-tpex_urls = [
-    "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes",
-]
-code_keys = ["SecuritiesCompanyCode", "Code", "CompanyCode", "stkno", "SecuritiesCode"]
-price_keys = ["Close", "ClosingPrice", "close", "LastPrice"]
+# 2) 上櫃 TPEx（多端點嘗試 + 欄位自動偵測）
+code_keys = ["SecuritiesCompanyCode", "Code", "CompanyCode", "SecuritiesCode", "stkno"]
+price_keys = ["Close", "ClosingPrice", "close", "LastPrice", "ClosePrice"]
 date_keys = ["Date", "date"]
-before = len(prices)
-for url in tpex_urls:
+tpex_endpoints = [
+    "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes",
+    "https://wwwc.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes",
+    "https://www.tpex.org.tw/openapi/v1/tpex_esb_latest_statistics",
+]
+debug["tpex_tries"] = []
+for url in tpex_endpoints:
+    entry = {"url": url}
     try:
         tp = get_json(url)
+        entry["records"] = len(tp)
+        entry["keys"] = list(tp[0].keys()) if tp else []
+        added = 0
         for row in tp:
             code = pick(row, code_keys)
             if code is None: continue
@@ -73,28 +78,27 @@ for url in tpex_urls:
             if code in secids and code not in prices:
                 p = clean_price(pick(row, price_keys))
                 if p is not None:
-                    prices[code] = p
+                    prices[code] = p; added += 1
                     d = pick(row, date_keys)
-                    dates[code] = roc_to_ad(d) if d else ""
-        print("TPEx cumulative matched:", sum(1 for c in secids if c in prices))
-        break
+                    if d: dates[code] = roc_to_ad(d)
+        entry["added"] = added
+        debug["tpex_tries"].append(entry)
+        if added > 0: break
     except Exception as e:
-        print("TPEx error:", e, file=sys.stderr)
+        entry["error"] = repr(e)[:200]
+        debug["tpex_tries"].append(entry)
 
-quote_date = ""
-if dates:
-    quote_date = sorted(dates.values())[-1]
-
+quote_date = sorted(dates.values())[-1] if dates else ""
 missing = sorted(c for c in secids if c not in prices)
 out = {
-    "updated": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "quoteDate": quote_date,
     "count": len(prices),
     "total": len(secids),
     "prices": {k: prices[k] for k in sorted(prices)},
     "missing": missing,
+    "debug": debug,
 }
 json.dump(out, open("prices.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print(f"Wrote prices.json: {len(prices)}/{len(secids)} matched, {len(missing)} missing")
-if missing:
-    print("missing sample:", missing[:20])
+print(f"matched {len(prices)}/{len(secids)}; missing {len(missing)}")
+print("debug:", json.dumps(debug, ensure_ascii=False)[:500])
