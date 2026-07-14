@@ -1,8 +1,8 @@
-name: 每日更新股期收盤價
+name: 每日更新股期收盤價與未沖銷口數
 
 on:
   schedule:
-    - cron: '0 9 * * 1-5'
+    - cron: '0 12 * * 1-5'
   workflow_dispatch:
 
 permissions:
@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Fetch closing prices
+      - name: Fetch closing prices and open interest
         run: python fetch_prices.py
       - name: Commit if changed
         run: |
@@ -24,7 +24,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain prices.json)" ]; then
             git add prices.json
-            git commit -m "auto update closing prices"
+            git commit -m "auto update daily data"
             git push
           else
             echo "no change"
