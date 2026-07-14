@@ -23,12 +23,12 @@ input,select{padding:9px 11px;background:var(--panel2);border:1px solid var(--li
 input:focus,select:focus{outline:none;border-color:var(--accent)}
 input::placeholder{color:#5f7086}
 /* 篩選器：每個條件各自一個框 */
-.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
 .fbox{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px}
 .fbox.on{border-color:var(--accent);box-shadow:0 0 0 1px rgba(59,130,246,.25)}
+.opsel{margin-bottom:8px}
 .frow{display:flex;gap:8px;align-items:center}
-.frow select{flex:0 0 92px}
-.frow input{flex:1;min-width:0}
+.frow input{flex:1;min-width:0;text-align:right;font-family:ui-monospace,monospace}
 .tilde{color:var(--muted);flex:0 0 auto}
 .hide{display:none!important}
 .hint{font-size:11px;color:var(--muted);margin-top:7px}
@@ -89,8 +89,8 @@ a{color:var(--accent)}
 
   <div class="fbox" id="box_oi">
     <label>未沖銷口數（口）</label>
+    <select id="foiop" class="opsel"><option value="gt">大於</option><option value="lt">小於</option><option value="bt">區間</option></select>
     <div class="frow">
-      <select id="foiop"><option value="gt">大於</option><option value="lt">小於</option><option value="bt">區間</option></select>
       <input id="foival" type="number" min="0" step="100" placeholder="口數">
       <span class="tilde hide" id="oitilde">~</span>
       <input id="foival2" type="number" min="0" step="100" placeholder="最大" class="hide">
@@ -100,8 +100,8 @@ a{color:var(--accent)}
 
   <div class="fbox" id="box_cv">
     <label>契約價值（元）</label>
+    <select id="fcvop" class="opsel"><option value="gt">大於</option><option value="lt">小於</option><option value="bt">區間</option></select>
     <div class="frow">
-      <select id="fcvop"><option value="gt">大於</option><option value="lt">小於</option><option value="bt">區間</option></select>
       <input id="fcvval" type="number" min="0" step="10000" placeholder="金額">
       <span class="tilde hide" id="cvtilde">~</span>
       <input id="fcvval2" type="number" min="0" step="10000" placeholder="最大" class="hide">
