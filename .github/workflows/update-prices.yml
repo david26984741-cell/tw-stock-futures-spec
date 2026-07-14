@@ -22,8 +22,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain prices.json)" ]; then
-            git add prices.json
+          if [ -n "$(git status --porcelain prices.json index.html)" ]; then
+            git add prices.json index.html
             git commit -m "auto update daily data"
             git push
           else
