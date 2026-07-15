@@ -4,7 +4,7 @@
 #   1. 任一來源失敗／當日尚未公布時，沿用前一交易日既有資料（不會變空白）
 #   2. 產生 prices.json（網站線上讀取）
 #   3. 同步把最新快照內嵌回 index.html（即使離線或直接開啟檔案也看得到資料）
-import json, os, re, urllib.request, datetime
+import json, os, re, time, urllib.request, datetime
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -14,10 +14,19 @@ HEADERS = {
     "Referer": "https://www.tpex.org.tw/",
 }
 
-def get_json(url):
-    req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read().decode("utf-8", "replace"))
+def get_json(url, tries=3):
+    # 自動重試：資料源偶有傳輸中斷（IncompleteRead）或短暫不穩
+    last = None
+    for i in range(tries):
+        try:
+            req = urllib.request.Request(url, headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=90) as r:
+                return json.loads(r.read().decode("utf-8", "replace"))
+        except Exception as e:
+            last = e
+            if i < tries - 1:
+                time.sleep(3 * (i + 1))
+    raise last
 
 def num(v):
     try: return float(str(v).replace(",", "").strip())
