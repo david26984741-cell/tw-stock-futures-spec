@@ -1,5 +1,5 @@
 {
- "updated": "2026-07-15T07:05:38Z",
+ "updated": "2026-07-15T08:32:27Z",
  "quoteDate": "2026-07-14",
  "oiDate": "2026-07-14",
  "count": 247,
@@ -555,7 +555,7 @@
    "matched": 200
   },
   "tpex": {
-   "error": "IncompleteRead(523881 bytes read, 3382401 more expected)"
+   "error": "IncompleteRead(589417 bytes read, 3343287 more expected)"
   },
   "taifex_oi": {
    "records": 2268,
