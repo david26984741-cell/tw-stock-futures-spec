@@ -1,5 +1,5 @@
 {
- "updated": "2026-07-25T05:42:50Z",
+ "updated": "2026-07-27T06:29:47Z",
  "quoteDate": "2026-07-24",
  "oiDate": "2026-07-24",
  "count": 247,
@@ -559,12 +559,11 @@
    "added": 47
   },
   "taifex_oi": {
-   "records": 2127,
-   "matched": 291
+   "error": "JSONDecodeError('Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)')"
   },
   "carried_forward": {
    "prices": 0,
-   "oi": 0
+   "oi": 291
   }
  }
 }
