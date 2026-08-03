@@ -1,5 +1,5 @@
 {
- "updated": "2026-08-01T05:54:08Z",
+ "updated": "2026-08-03T06:30:48Z",
  "quoteDate": "2026-07-31",
  "oiDate": "2026-07-31",
  "count": 247,
@@ -551,8 +551,7 @@
  "missing": [],
  "debug": {
   "twse": {
-   "records": 1373,
-   "matched": 200
+   "error": "URLError(TimeoutError('timed out'))"
   },
   "tpex": {
    "records": 10218,
@@ -563,7 +562,7 @@
    "matched": 289
   },
   "carried_forward": {
-   "prices": 1,
+   "prices": 201,
    "oi": 2
   }
  }
