@@ -1,6 +1,6 @@
 {
- "updated": "2026-10-21T08:17:35Z",
- "quoteDate": "2026-10-21",
+ "updated": "2026-10-21T16:29:03Z",
+ "quoteDate": "2026-10-20",
  "oiDate": "2026-10-20",
  "count": 247,
  "total": 247,
@@ -555,15 +555,14 @@
    "matched": 200
   },
   "tpex": {
-   "records": 12950,
-   "added": 46
+   "error": "IncompleteRead(3604073 bytes read, 1454714 more expected)"
   },
   "taifex_oi": {
    "records": 2327,
    "matched": 290
   },
   "carried_forward": {
-   "prices": 1,
+   "prices": 47,
    "oi": 1
   }
  }
